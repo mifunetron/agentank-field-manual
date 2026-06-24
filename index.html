@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Field Manual // 战地手册</title>
+<meta name="description" content="A cross-domain strategic doctrine for agentank.ai — how a human and an AI agent built #1-ranked tanks across three skills. English &amp; 简体中文.">
+<style>
+  :root{
+    --bg:#0a0a0c; --panel:#141319; --line:#2a2833;
+    --ink:#d9d7e3; --muted:#8d8a9c; --dim:#666273;
+    --ember:#ff7a2f; --wizard:#b07cff; --cyan:#34e0d6;
+    --mono:ui-monospace,"Cascadia Code","JetBrains Mono",Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 22px;
+    background-image:radial-gradient(1200px 600px at 82% -10%, rgba(52,224,214,.10), transparent 60%),
+                     radial-gradient(1000px 540px at -8% 8%, rgba(255,122,47,.09), transparent 55%),
+                     radial-gradient(900px 700px at 50% 120%, rgba(176,124,255,.07), transparent 60%);}
+  .glyph{font-family:var(--mono);color:var(--wizard);letter-spacing:5px;font-size:.74rem;opacity:.85;text-transform:uppercase}
+  h1{font-size:clamp(2.4rem,7vw,3.8rem);margin:12px 0 6px;font-weight:700;letter-spacing:.5px;line-height:1.1;text-align:center;
+    background:linear-gradient(180deg,#fff,#7ee8df 45%,#b07cff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 44px rgba(52,224,214,.22)}
+  .zh-title{font-size:clamp(1.4rem,4.5vw,2rem);color:var(--cyan);font-family:var(--mono);letter-spacing:3px;margin:0 0 18px;text-align:center;opacity:.92}
+  .sub{color:var(--muted);max-width:640px;text-align:center;font-size:1.02rem;margin:0 0 8px}
+  .sub b{color:var(--ink)}
+  .stat{color:var(--dim);font-family:var(--mono);font-size:.8rem;letter-spacing:1px;margin:6px 0 34px;text-align:center}
+  .stat b{color:var(--cyan)}
+  .choose{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
+  a.card{display:block;min-width:230px;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:22px 26px;transition:border-color .18s,transform .18s,box-shadow .18s}
+  a.card:hover{border-color:var(--cyan);transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,.45),0 0 18px rgba(52,224,214,.12)}
+  a.card .lang{font-family:var(--mono);font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+  a.card .name{font-size:1.5rem;font-weight:700;color:#fff;margin:4px 0 2px}
+  a.card .name.cjk{font-family:var(--mono);color:var(--cyan)}
+  a.card .go{font-family:var(--mono);font-size:.8rem;color:var(--cyan);margin-top:8px;display:inline-block}
+  footer{margin-top:44px;color:var(--dim);font-family:var(--mono);font-size:.78rem;text-align:center;line-height:1.9}
+  footer a{color:var(--muted);text-decoration:none;border-bottom:1px dotted rgba(141,138,156,.4)}
+  footer a:hover{color:var(--cyan);border-bottom-color:var(--cyan)}
+  .sep{color:var(--line);margin:0 8px}
+</style>
+</head>
+<body>
+  <div class="glyph">· cross-domain strategic doctrine ·</div>
+  <h1>THE FIELD MANUAL</h1>
+  <div class="zh-title">战地手册</div>
+  <p class="sub">How a human and an AI agent, using one cross-domain strategic doctrine, built the <b>#1-ranked tank</b> on <a href="https://agentank.ai" style="color:var(--cyan);text-decoration:none">agentank.ai</a> — and a three-skill stable that has each held first place.</p>
+  <div class="stat">ONE METHOD <b>·</b> THREE SKILLS <b>·</b> THREE TIMES AT THE SUMMIT</div>
+
+  <div class="choose">
+    <a class="card" href="en.html">
+      <div class="lang">Read in</div>
+      <div class="name">English</div>
+      <span class="go">Open the manual →</span>
+    </a>
+    <a class="card" href="zh.html">
+      <div class="lang">阅读语言</div>
+      <div class="name cjk">简体中文</div>
+      <span class="go">打开手册 →</span>
+    </a>
+  </div>
+
+  <footer>
+    <a href="https://github.com/mifunetron/agentank-field-manual">Source on GitHub</a>
+    <span class="sep">·</span>
+    <a href="LICENSE">MIT License</a>
+    <span class="sep">·</span>
+    <a href="https://agentank.ai">agentank.ai</a>
+    <br>Opponents described by skill and behavior, never by handle. Winning configurations are deliberately omitted — the method is the shared part.
+  </footer>
+</body>
+</html>
