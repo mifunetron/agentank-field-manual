@@ -327,6 +327,22 @@
 
     <h3>先可靠，后战术</h3>
     <p>接管的第一条铁律：先修好坏掉的东西，再谈花活。那些超时失败，源自一个每帧要跑三到四次搜索的寻路器。一次记忆化改造让它<b>行为字节级一致，速度却快了约 50%</b>：超时从 <span class="mono">9.5% &rarr; 0</span>。纯粹是消除下行风险，战术分毫未动——先垫高下限，再去够上限。</p>
+    <p>大致是这样 —— 同一个搜索，一帧内被重算了好几次，改成每帧只算一次、其余复用缓存：</p>
+    <pre><span class="c">// 改之前 —— 路径搜索每次调用都从头重算，而且每帧有好几个</span>
+<span class="c">// 系统各要一次，3–4 次/帧 → 帧耗时撑爆回合预算 → 超时。</span>
+<span class="k">function</span> <span class="f">planMove</span>(state){
+  <span class="k">const</span> toStar = <span class="f">search</span>(state, <span class="f">nearestStar</span>(state));   <span class="c">// 完整搜索</span>
+  <span class="k">const</span> toSafe = <span class="f">search</span>(state, <span class="f">safestTile</span>(state));   <span class="c">// 又一次完整搜索</span>
+  <span class="k">const</span> toFoe  = <span class="f">search</span>(state, state.enemy);          <span class="c">// ……再来一次</span>
+  <span class="k">return</span> <span class="f">choose</span>(toStar, toSafe, toFoe);
+}</pre>
+    <pre><span class="c">// 改之后 —— 每帧一份缓存：结果逐字节一致，工作量减半。超时 9.5% → 0。</span>
+<span class="k">let</span> _memo = {}, _frame = -<span class="n">1</span>;
+<span class="k">function</span> <span class="f">search</span>(state, goal){
+  <span class="k">if</span> (state.frame !== _frame) { _memo = {}; _frame = state.frame; }   <span class="c">// 新的一帧 → 清空</span>
+  <span class="k">const</span> k = <span class="f">key</span>(goal);
+  <span class="k">return</span> _memo[k] ?? (_memo[k] = <span class="f">bfs</span>(state, goal));   <span class="c">// 只算一次，之后复用</span>
+}</pre>
 
     <h3>接着：逆向解析 meta（又一次，侦察铁律）</h3>
     <p>我们侦察了排名靠前的十一辆传送坦克。结论推翻了继承下来的设计思路：<b>传送 meta 靠战斗取胜，而非抢星</b>——它 77% 的胜利来自击杀。贯穿其中的统一打法，是一招<em>开局草丛伏击</em>：</p>
@@ -350,6 +366,21 @@
     <p>对排名第 5 的隐形坦克做了一次深入、诚实的重新侦察，彻底推翻了我们整个模型。它的制胜打法不是移动隐形潜行 —— 而是<b>恰恰相反</b>：</p>
     <div class="callout spine"><div class="k">真正的机制 —— 一个原地不动的草丛走廊伏击狙击手</div> <b>只</b>走一次，走到地图确定性中央通道上的某一格草丛，朝它面向下，然后<b>停止移动</b>。草丛免费帮你隐身，于是你整局都隐形而枪已上膛地坐着 —— 在敌人越过你那一行的那一刻，打出<em>一</em>发无解之弹。隐形只不过是一趟早早把你送到据点的车。<b>你靠静止取胜，而非靠走位：敌人一头撞进一把看不见的枪的射界，把自己钉死在那一枪上。</b></div>
     <p>这是我们自家两条铁律最纯粹的表达 —— <em>从敌人无法定位之处取胜</em>（第 6 条）与<em>完成已确认的决断；别以走位代替决断</em>（第 3 条）。每一个失败的杠杆都在<em>违背</em>它们，用繁复的走位去顶替那个简单、果断、隐蔽的击杀。我们走到外面，而在外头找到的，正是我们早已握在手里的法则。</p>
+    <p>这次改动是做减法 —— 不再追击，改为坐定：</p>
+    <pre><span class="c">// 改之前 —— 移动隐形：每帧朝敌人重新规划路径，靠近了就开火。</span>
+<span class="c">// 对阵顶尖坦克基本是掷硬币（见下表）。</span>
+<span class="k">function</span> <span class="f">act</span>(state){
+  <span class="f">cloakIfReady</span>(state);
+  <span class="f">step</span>(<span class="f">search</span>(state, state.enemy));      <span class="c">// 隐形追击，持续移动</span>
+  <span class="k">if</span> (<span class="f">lineOfFire</span>(state, state.enemy)) <span class="f">fire</span>();
+}</pre>
+    <pre><span class="c">// 改之后 —— 蹲点：只走一趟到中线上的隐蔽格，然后停住。</span>
+<span class="c">// 静止就是战术 —— 草丛把你藏住，枪一直上着膛。</span>
+<span class="k">function</span> <span class="f">act</span>(state){
+  <span class="k">if</span> (!<span class="f">atNest</span>(state)) { <span class="f">step</span>(<span class="f">search</span>(state, <span class="f">nest</span>(state))); <span class="k">return</span>; }   <span class="c">// 只走进去一次</span>
+  <span class="f">faceDownLane</span>(state);                            <span class="c">// 之后再也不动</span>
+  <span class="k">if</span> (<span class="f">enemyEntersLane</span>(state)) <span class="f">fire</span>();        <span class="c">// 那一发无解之弹</span>
+}</pre>
 
     <h3>诚实之门，以及证明</h3>
     <p>一个对前 5 坦克的忠实克隆，<em>必然</em>是强的。基于修正后的模型造出来的我们这辆，正面交手按击杀打赢了自家的冠军坦克：</p>

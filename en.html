@@ -327,6 +327,22 @@
 
     <h3>Reliability before tactics</h3>
     <p>First rule of the takeover: fix what's broken before adding cleverness. The timeout losses came from a pathfinder running three-to-four searches per frame. A memoization pass made it <b>byte-identical in behavior but ~50% faster</b>: timeouts <span class="mono">9.5% &rarr; 0</span>. Pure downside removal, zero tactical change — the floor before the ceiling.</p>
+    <p>The shape of it — the same search, recomputed several times a frame, then computed once and cached:</p>
+    <pre><span class="c">// BEFORE — the path search recomputed from scratch on every call, and several</span>
+<span class="c">// systems each asked for one 3–4× per frame → frame time overran the turn budget → timeouts.</span>
+<span class="k">function</span> <span class="f">planMove</span>(state){
+  <span class="k">const</span> toStar = <span class="f">search</span>(state, <span class="f">nearestStar</span>(state));   <span class="c">// full search</span>
+  <span class="k">const</span> toSafe = <span class="f">search</span>(state, <span class="f">safestTile</span>(state));   <span class="c">// full search, again</span>
+  <span class="k">const</span> toFoe  = <span class="f">search</span>(state, state.enemy);          <span class="c">// …and again</span>
+  <span class="k">return</span> <span class="f">choose</span>(toStar, toSafe, toFoe);
+}</pre>
+    <pre><span class="c">// AFTER — one cache per frame: byte-identical results, ~half the work. Timeouts 9.5% → 0.</span>
+<span class="k">let</span> _memo = {}, _frame = -<span class="n">1</span>;
+<span class="k">function</span> <span class="f">search</span>(state, goal){
+  <span class="k">if</span> (state.frame !== _frame) { _memo = {}; _frame = state.frame; }   <span class="c">// new frame → wipe</span>
+  <span class="k">const</span> k = <span class="f">key</span>(goal);
+  <span class="k">return</span> _memo[k] ?? (_memo[k] = <span class="f">bfs</span>(state, goal));   <span class="c">// compute once, then reuse</span>
+}</pre>
 
     <h3>Then: reverse-engineer the meta (the scouting imperative, again)</h3>
     <p>We scouted eleven of the top teleport tanks. The finding overturned the inherited design: <b>the teleport meta wins by COMBAT, not the star race</b> — 77% of its wins are kills. The unifying play is an <em>opening grass-ambush</em>:</p>
@@ -350,6 +366,21 @@
     <p>A deep, honest re-scout of the #5-ranked cloak tank overturned our whole model. The wincon was not a mobile cloak-stalk — it was the <b>opposite</b>:</p>
     <div class="callout spine"><div class="k">The real mechanic — a stationary grass-corridor ambush sniper</div> Walk <b>once</b> to a single grass tile on the map's deterministic center lane, face down it, and <b>stop moving</b>. Grass conceals you for free, so you sit invisible and gun-loaded for the whole match — firing <em>one</em> unanswered shot the moment the enemy crosses your row. Cloak is just an early taxi to the nest. <b>You win by stillness, not motion: the enemy walks into a shot from an invisible gun and impales itself.</b></div>
     <p>It is the purest possible expression of two of our own maxims — <em>win from where the enemy cannot orient</em> (6) and <em>complete the confirmed commitment; don't substitute motion for it</em> (3). Every failed lever had been <em>violating</em> them, substituting elaborate motion for the simple, committed, concealed kill. We went outside, and what we found out there was the law we already had.</p>
+    <p>The change was subtractive — stop chasing, start sitting:</p>
+    <pre><span class="c">// BEFORE — mobile cloak: re-plan toward the enemy every frame, shoot when close.</span>
+<span class="c">// A coin-flip against the top tanks (see the table below).</span>
+<span class="k">function</span> <span class="f">act</span>(state){
+  <span class="f">cloakIfReady</span>(state);
+  <span class="f">step</span>(<span class="f">search</span>(state, state.enemy));      <span class="c">// chase under cloak, keep moving</span>
+  <span class="k">if</span> (<span class="f">lineOfFire</span>(state, state.enemy)) <span class="f">fire</span>();
+}</pre>
+    <pre><span class="c">// AFTER — the camp: one trip to a concealing tile on the centre lane, then STOP.</span>
+<span class="c">// Stillness is the strategy — grass hides you, the gun stays loaded.</span>
+<span class="k">function</span> <span class="f">act</span>(state){
+  <span class="k">if</span> (!<span class="f">atNest</span>(state)) { <span class="f">step</span>(<span class="f">search</span>(state, <span class="f">nest</span>(state))); <span class="k">return</span>; }   <span class="c">// walk in once</span>
+  <span class="f">faceDownLane</span>(state);                            <span class="c">// then never move again</span>
+  <span class="k">if</span> (<span class="f">enemyEntersLane</span>(state)) <span class="f">fire</span>();        <span class="c">// the one unanswered shot</span>
+}</pre>
 
     <h3>The honesty gate, and the proof</h3>
     <p>A faithful clone of a top-5 tank <em>has</em> to be strong. Built on the corrected model, ours beat our own champions head-to-head — by kills:</p>
